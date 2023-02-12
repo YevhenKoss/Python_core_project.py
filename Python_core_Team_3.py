@@ -8,31 +8,36 @@ from prompt_toolkit.key_binding import KeyBindings
 import time
 
 finish_words = ["goodbye", "close", "exit"]
-COMMAND_WORDS = ["add", "change", "phone", "show_all", "help", "delete", "address", "email", "birthday", "days_to_birthday", "get_birthdays", "save", "get_book", "find"]
-Autocomplete_words = ["goodbye", "close", "exit", "add", "change", "phone", "show_all", "help", "delete", "address", "email", "birthday", "days_to_birthday", "get_birthdays", "save", "get_book", "find"]
+COMMAND_WORDS = ["add", "change", "show_phone", "show_email", "show_address", "show_birthday", "show_all", "help",
+                 "delete", "address", "email", "birthday", "days_to_birthday", "get_birthdays", "save", "get_book",
+                 "find"]
+Autocomplete_words = ["goodbye", "close", "exit", "add", "change", "show_phone", "show_email", "show_address",
+                      "show_birthday", "show_all", "help", "delete", "address", "email", "birthday", "days_to_birthday",
+                      "get_birthdays", "save", "get_book", "find"]
+
 
 class PhoneNotInt(Exception):
     pass
 
+
 class BirthdayNotDate(Exception):
     pass
+
 
 class EmailNotEmail(Exception):
     pass
 
 
 class AddressBook(UserDict):
-
     user_id = 0
-            
+
     def __iter__(self):
         return Iterable(len(self.data), self.quantity_on_page)
 
-    
     def add_record(self, new_user):
 
         AddressBook.user_id += 1
-        
+
         if type(new_user) == str:
             return new_user
 
@@ -42,7 +47,6 @@ class AddressBook(UserDict):
 
     def get_contacts(self):
         return self.data
-    
 
     def get_contacts_pages(self, quantity_on_page):
         self.contacts_on_page = []
@@ -50,10 +54,9 @@ class AddressBook(UserDict):
         len_add_book = len(self.data)
         i = -1
         for key, val in self.data.items():
-            
-  
+
             self.dict_on_page.update({key: val})
-            
+
             if len(self.dict_on_page) >= quantity_on_page:
                 self.contacts_on_page.append(self.dict_on_page)
                 self.dict_on_page = {}
@@ -63,25 +66,27 @@ class AddressBook(UserDict):
 
     def saving_address_book(self):
 
-        with open("address_book.csv", "w", newline = "") as fh:
+        with open("address_book.csv", "w", newline="") as fh:
             field_names = ["name", "phones", "birthday", "email", "address"]
-            writer = csv.DictWriter(fh, fieldnames = field_names)
+            writer = csv.DictWriter(fh, fieldnames=field_names)
             writer.writeheader()
             for val in self.data.values():
                 writer.writerow(val)
 
     def unpaking_address_book(self):
 
-        with open("address_book.csv", "r", newline = "") as fh:
+        with open("address_book.csv", "r", newline="") as fh:
             self.unpacked_data = {}
             reader = csv.DictReader(fh)
             for row in reader:
                 users_phones_list = []
-                phones_with_pref_suf = row["phones"][2:len(row["phones"])-2:]
+                phones_with_pref_suf = row["phones"][2:len(row["phones"]) - 2:]
                 users_phones_list_base = phones_with_pref_suf.split("', '")
                 for element in users_phones_list_base:
                     users_phones_list.append(str(element))
-                self.unpacked_data[row["name"]] = {"name": row["name"], "phones": users_phones_list, "birthday": row["birthday"], "email": row["email"], "address": row["address"]}
+                self.unpacked_data[row["name"]] = {"name": row["name"], "phones": users_phones_list,
+                                                   "birthday": row["birthday"], "email": row["email"],
+                                                   "address": row["address"]}
 
             if not self.data:
                 self.data = self.unpacked_data
@@ -110,6 +115,7 @@ class AddressBook(UserDict):
         else:
             return self.found_list
 
+
 class Iterable():
 
     def __init__(self, len_address_book, quantity_on_page):
@@ -124,20 +130,35 @@ class Iterable():
             self.current_contacts += self.quantity_on_page
             return AddressBook().contacts_on_page[self.page_number]
         else:
-            if self.len_address_book//self.quantity_on_page:
+            if self.len_address_book // self.quantity_on_page:
                 self.page_number += 1
                 return AddressBook().contacts_on_page[self.page_number]
         raise StopIteration
 
+
 class Field:
     pass
 
-class Record(Field):
+
+class Presentation:
+    def show_phone(self, name, address_book):
+        raise NotImplementedError
+
+    def show_email(self, name, address_book):
+        raise NotImplementedError
+
+    def show_birthday(self, name, address_book):
+        raise NotImplementedError
+
+    def show_address(self, name, address_book):
+        raise NotImplementedError
+
+
+class Record(Presentation):
 
     def record_name(self, name):
         self.name = name
         return self.name
-
 
     def record_phone(self, phones):
         self.phone_numb = phones
@@ -147,7 +168,7 @@ class Record(Field):
         self.birthday_date = birthday
         return self.birthday_date
 
-    def add_user(self, name, phones, address_book, birthday = None, email = None, address = None):
+    def add_user(self, name, phones, address_book, birthday=None, email=None, address=None):
 
         new_user = {}
 
@@ -164,25 +185,31 @@ class Record(Field):
     def change_number(self, name, phones, address_book):
         for key, val in address_book.items():
             if key == name:
-                return {name: {"name": name, "phones": phones, "birthday": address_book[key]["birthday"], "email": address_book[key]["email"], "address": address_book[key]["address"]}}
+                return {name: {"name": name, "phones": phones, "birthday": address_book[key]["birthday"],
+                               "email": address_book[key]["email"], "address": address_book[key]["address"]}}
         return f"There is no user with name {name}"
 
     def add_address(self, name, address, address_book):
         for key, val in address_book.items():
             if key == name:
-                return {name: {"name": name, "phones": address_book[key]["phones"], "birthday": address_book[key]["birthday"], "email": address_book[key]["email"], "address": address}}
+                return {name: {"name": name, "phones": address_book[key]["phones"],
+                               "birthday": address_book[key]["birthday"], "email": address_book[key]["email"],
+                               "address": address}}
         return f"There is no user with name {name}"
 
     def add_birthday(self, name, birthday, address_book):
         for key, val in address_book.items():
             if key == name:
-                return {name: {"name": name, "phones": address_book[key]["phones"], "birthday": birthday, "email": address_book[key]["email"], "address": address_book[key]["address"]}}
+                return {name: {"name": name, "phones": address_book[key]["phones"], "birthday": birthday,
+                               "email": address_book[key]["email"], "address": address_book[key]["address"]}}
         return f"There is no user with name {name}"
 
     def add_email(self, name, email, address_book):
         for key, val in address_book.items():
             if key == name:
-                return {name: {"name": name, "phones": address_book[key]["phones"], "birthday": address_book[key]["birthday"], "email": email, "address": address_book[key]["address"]}}
+                return {name: {"name": name, "phones": address_book[key]["phones"],
+                               "birthday": address_book[key]["birthday"], "email": email,
+                               "address": address_book[key]["address"]}}
         return f"There is no user with name {name}"
 
     def show_phone(self, name, address_book):
@@ -192,18 +219,42 @@ class Record(Field):
                 return f"the user {key} has the next phone numbers {address_book[key]['phones']}"
         return f"There is not {name} in the Address book"
 
+    def show_email(self, name, address_book):
+
+        for key, val in address_book.items():
+            if key == name:
+                return f"the user {key} has the next emails {address_book[key]['email']}"
+        return f"There is not {name} in the Address book"
+
+    def show_birthday(self, name, address_book):
+
+        for key, val in address_book.items():
+            if key == name:
+                return f"the user {key} birthday {address_book[key]['birthday']}"
+        return f"There is not {name} in the Address book"
+
+    def show_address(self, name, address_book):
+
+        for key, val in address_book.items():
+            if key == name:
+                return f"the user {key} has the next address {address_book[key]['address']}"
+        return f"There is not {name} in the Address book"
+
     def days_to_birthday(self, name, address_book):
         for key, val in address_book.items():
             if key == name and address_book[key]["birthday"]:
                 self.date_today = datetime.now()
-                self.next_birthday = datetime(year = self.date_today.year, month = int(address_book[key]["birthday"][3:5]), day = int(address_book[key]["birthday"][0:2]))
+                self.next_birthday = datetime(year=self.date_today.year, month=int(address_book[key]["birthday"][3:5]),
+                                              day=int(address_book[key]["birthday"][0:2]))
                 if self.next_birthday - self.date_today < timedelta(days=0):
-                    self.next_birthday = datetime(year = self.date_today.year+1, month = int(address_book[key]["birthday"][3:5]), day = int(address_book[key]["birthday"][0:2]))
-                    difference = str(self.next_birthday-self.date_today).split(",")
+                    self.next_birthday = datetime(year=self.date_today.year + 1,
+                                                  month=int(address_book[key]["birthday"][3:5]),
+                                                  day=int(address_book[key]["birthday"][0:2]))
+                    difference = str(self.next_birthday - self.date_today).split(",")
                     days_till_birthday = difference[0].split(" ")
                     return days_till_birthday[0]
                 elif self.next_birthday - self.date_today >= timedelta(days=0):
-                    difference = str(self.next_birthday-self.date_today).split(",")
+                    difference = str(self.next_birthday - self.date_today).split(",")
                     days_till_birthday = difference[0].split(" ")
                     return days_till_birthday[0]
         return f"There is not {name} in the Address book or user doesn't save the birthday"
@@ -215,11 +266,13 @@ class Name(Field):
         self.name_value = name
         return self.name_value
 
+
 class Address(Field):
 
     def address(self, address):
         self.address = address
         return self.address
+
 
 class Email(Field):
 
@@ -236,7 +289,6 @@ class Email(Field):
         self.__email = new_email
         check_email = re.search(r"[a-zA-Z]\w\w*[.]?\w*[.]?\w*[@]\w+[.]\w{2}\w*", self.__email)
 
-
         while True:
 
             try:
@@ -252,11 +304,11 @@ class Email(Field):
 
         return self.__email
 
+
 class Phone(Field):
 
     def __init__(self):
         self.__phones = []
-
 
     @property
     def phones(self):
@@ -278,12 +330,13 @@ class Phone(Field):
                     else:
                         i += 1
             except PhoneNotInt:
-                    inp_phones = input("Phones should be in format +XXXXXXXXXXXX. Please, enter in this format: ")
-                    self.__phones = inp_phones.split(" ")
-                    i=0
+                inp_phones = input("Phones should be in format +XXXXXXXXXXXX. Please, enter in this format: ")
+                self.__phones = inp_phones.split(" ")
+                i = 0
 
             else:
                 return self.__phones
+
 
 class Birthday(Field):
 
@@ -312,12 +365,15 @@ class Birthday(Field):
                     raise BirthdayNotDate
                 if int(birth_date[1]) > 12 or int(birth_date[1]) < 1 or int(birth_date[0]) < 1:
                     raise BirthdayNotDate
-                if int(birth_date[2]) >= int(self.current_day.year) and int(birth_date[1]) > int(self.current_day.month) and int(birth_date[0]) > int(self.current_day.day):
+                if int(birth_date[2]) >= int(self.current_day.year) and int(birth_date[1]) > int(
+                        self.current_day.month) and int(birth_date[0]) > int(self.current_day.day):
                     raise BirthdayNotDate
-                if int(birth_date[2]) > int(self.current_day.year) or int(birth_date[2]) < int(self.current_day.year)-100:
+                if int(birth_date[2]) > int(self.current_day.year) or int(birth_date[2]) < int(
+                        self.current_day.year) - 100:
                     raise BirthdayNotDate
                 if int(birth_date[1]) == 2:
-                    if int(birth_date[2]) % 4 == 0 and int(birth_date[0]) > 29 or int(birth_date[2]) % 4 != 0 and int(birth_date[0]) > 28:
+                    if int(birth_date[2]) % 4 == 0 and int(birth_date[0]) > 29 or int(birth_date[2]) % 4 != 0 and int(
+                            birth_date[0]) > 28:
                         raise BirthdayNotDate
                 if int(birth_date[1]) in [1, 3, 5, 7, 8, 10, 12]:
                     if int(birth_date[0]) > 31:
@@ -338,8 +394,8 @@ class Birthday(Field):
 
         return self.__birthday
 
-command_completer = WordCompleter(Autocomplete_words,ignore_case=True,)
 
+command_completer = WordCompleter(Autocomplete_words, ignore_case=True, )
 
 kb = KeyBindings()
 
@@ -357,9 +413,7 @@ def _(event):
         b.start_completion(select_first=False)
 
 
-
 def main():
-
     """
     This function takes the command from user and do what the user asks.
     It stops the process when the key words are entered
@@ -377,7 +431,6 @@ def main():
         except FileNotFoundError:
             print("You don't have the saved address book")
 
-
     while True:
 
         change_user = Record()
@@ -386,23 +439,16 @@ def main():
         user_address = Address()
         user_email = Email()
 
-
-
-               
-
         user_command = prompt(
             "Enter your command and data or enter 'help' to get the manual of bot  ",
             completer=command_completer,
             complete_while_typing=False,
             key_bindings=kb,
-        ) 
+        )
         user_command_small_letters = user_command.lower()
 
         if user_command_small_letters == "hello":
             print("How can I help you?")
-
-
-
 
         for word in COMMAND_WORDS:
 
@@ -412,11 +458,11 @@ def main():
 
                 user_data = user_command.split(" ")
 
-
                 if user_data[0].lower() == "add":
                     if len(user_data) > 2:
                         user_phone.phones = user_data[2::]
-                        print(f"add to the address book {contacts.add_record(change_user.add_user(change_user.record_name(Name().user_name_def(user_data[1])), change_user.record_phone(user_phone.phones), contacts.get_contacts()))}")
+                        print(
+                            f"add to the address book {contacts.add_record(change_user.add_user(change_user.record_name(Name().user_name_def(user_data[1])), change_user.record_phone(user_phone.phones), contacts.get_contacts()))}")
 
                 elif user_data[0].lower() == "help":
                     print("""Enter\n
@@ -425,7 +471,10 @@ def main():
                           'days_to_birthday' to see the quantity of days till user's birthday,\n
                           'get_birthdays' and number for seaching users with birthdays in number days,\n
                           'change' and user's name and phone for changing the phone number,\n
-                          'phone' and user's name to show the phone number,\n
+                          'show_phone' and user's name to show the phone number,\n
+                          'show_email' and user's name to show the email,\n
+                          'show_address' and user's name to show the address,\n
+                          'show_birthday' and user's name to show the birthday,\n
                           'email' and user's name and email to add the email,\n
                           'address' and user's name and address to add the address,\n
                           'show_all' and quantity of users on page to see all users,\n
@@ -437,34 +486,44 @@ def main():
                 elif user_command_small_letters.startswith("show_all"):
                     if len(user_data) == 2:
                         pages = contacts.get_contacts_pages(int(user_data[1]))
-                        if len(contacts.get_contacts())%int(user_data[1]):
-                            for i in range(len(contacts.get_contacts())//int(user_data[1]) + 1):
+                        if len(contacts.get_contacts()) % int(user_data[1]):
+                            for i in range(len(contacts.get_contacts()) // int(user_data[1]) + 1):
                                 print(f"page {i} {pages[i]}")
                         else:
-                            for i in range(len(contacts.get_contacts())//int(user_data[1])):
+                            for i in range(len(contacts.get_contacts()) // int(user_data[1])):
                                 print(f"page {i} {pages[i]}")
 
                 elif user_data[0].lower() == "change":
                     if len(user_data) > 2:
                         user_phone.phones = user_data[2:]
-                        contacts.add_record(change_user.change_number(change_user.record_name(Name().user_name_def(user_data[1])), change_user.record_phone(user_phone.phones), contacts.get_contacts()))
-                        print(f"changes in the address book: for {change_user.record_name(Name().user_name_def(user_data[1]))} result {user_phone.phones}")
+                        contacts.add_record(
+                            change_user.change_number(change_user.record_name(Name().user_name_def(user_data[1])),
+                                                      change_user.record_phone(user_phone.phones),
+                                                      contacts.get_contacts()))
+                        print(
+                            f"changes in the address book: for {change_user.record_name(Name().user_name_def(user_data[1]))} result {user_phone.phones}")
 
                 elif user_data[0].lower() == "birthday":
                     if len(user_data) == 3:
                         user_birthday.birthday = user_data[2]
-                        print(contacts.add_record(change_user.add_birthday(change_user.record_name(Name().user_name_def(user_data[1])), user_birthday.birthday, contacts.get_contacts())))
+                        print(contacts.add_record(
+                            change_user.add_birthday(change_user.record_name(Name().user_name_def(user_data[1])),
+                                                     user_birthday.birthday, contacts.get_contacts())))
 
                 elif user_data[0].lower() == "address":
                     if len(user_data) >= 3:
                         user_address.address = "".join(user_data[2:])
-                        print(contacts.add_record(change_user.add_address(change_user.record_name(Name().user_name_def(user_data[1])), user_address.address, contacts.get_contacts())))
+                        print(contacts.add_record(
+                            change_user.add_address(change_user.record_name(Name().user_name_def(user_data[1])),
+                                                    user_address.address, contacts.get_contacts())))
 
 
                 elif user_data[0].lower() == "email":
                     if len(user_data) == 3:
                         user_email.email = user_data[2]
-                        print(contacts.add_record(change_user.add_email(change_user.record_name(Name().user_name_def(user_data[1])), user_email.email, contacts.get_contacts())))
+                        print(contacts.add_record(
+                            change_user.add_email(change_user.record_name(Name().user_name_def(user_data[1])),
+                                                  user_email.email, contacts.get_contacts())))
 
                 elif user_data[0].lower() == "delete":
                     if len(user_data) == 2:
@@ -475,10 +534,21 @@ def main():
                         else:
                             print(f"{user_data[1]} was deleted from address book")
 
-
-                elif user_data[0].lower() == "phone":
+                elif user_data[0].lower() == "show_phone":
                     if len(user_data) > 1:
                         print(change_user.show_phone(Name().user_name_def(user_data[1]), contacts.get_contacts()))
+
+                elif user_data[0].lower() == "show_email":
+                    if len(user_data) > 1:
+                        print(change_user.show_email(Name().user_name_def(user_data[1]), contacts.get_contacts()))
+
+                elif user_data[0].lower() == "show_address":
+                    if len(user_data) > 1:
+                        print(change_user.show_address(Name().user_name_def(user_data[1]), contacts.get_contacts()))
+
+                elif user_data[0].lower() == "show_birthday":
+                    if len(user_data) > 1:
+                        print(change_user.show_birthday(Name().user_name_def(user_data[1]), contacts.get_contacts()))
 
                 elif user_data[0].lower() == "days_to_birthday":
                     if len(user_data) > 1:
@@ -489,9 +559,10 @@ def main():
                         list_users_with_birthday = []
 
                         try:
-                            if 0<=int(user_data[1])<366:
+                            if 0 <= int(user_data[1]) < 366:
                                 for key, val in contacts.get_contacts().items():
-                                    if int(change_user.days_to_birthday(Name().user_name_def(key), contacts.get_contacts())) < int(user_data[1]):
+                                    if int(change_user.days_to_birthday(Name().user_name_def(key),
+                                                                        contacts.get_contacts())) < int(user_data[1]):
                                         list_users_with_birthday.append({key: val})
                                 print(list_users_with_birthday)
                         except ValueError:
@@ -516,11 +587,11 @@ def main():
 
         if user_command_small_letters in finish_words:
             save_or_not = prompt(
-            "Do you want to save? Enter Yes or No: ",
-            completer=command_completer,
-            complete_while_typing=False,
-            key_bindings=kb,
-            ) 
+                "Do you want to save? Enter Yes or No: ",
+                completer=command_completer,
+                complete_while_typing=False,
+                key_bindings=kb,
+            )
             save_or_not_small_letters = save_or_not.lower()
             if save_or_not_small_letters == "yes":
                 contacts.saving_address_book()
