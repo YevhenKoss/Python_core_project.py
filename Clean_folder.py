@@ -1,9 +1,8 @@
+import os
 import pathlib
 import re
-import os
 import shutil
 import time
-
 
 files = {'immages': {'.jpeg', '.png', '.jpg', '.svg', '.psd'},
          'video': {'.avi', '.mp4', '.mov', '.mkv'},

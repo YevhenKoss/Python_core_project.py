@@ -1,10 +1,11 @@
 # Import the necessary packages
-import Python_core_Team_3
-import Clean_folder
-import Notes
 from consolemenu import *
 from consolemenu.items import *
 from termcolor import colored
+
+import Clean_folder
+import Notes
+import Python_core_Team_3
 
 a_b = "Address Book - the application that allows you to create and edit contacts.\nSee the application's Help for " \
       "details."

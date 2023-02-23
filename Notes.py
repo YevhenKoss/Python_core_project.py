@@ -1,6 +1,6 @@
 import pickle
-from datetime import datetime
 import time
+from datetime import datetime
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.key_binding import KeyBindings

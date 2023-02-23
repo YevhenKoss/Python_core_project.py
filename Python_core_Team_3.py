@@ -1,11 +1,11 @@
-from collections import UserDict
-from datetime import datetime, timedelta
 import csv
 import re
+import time
+from collections import UserDict
+from datetime import datetime, timedelta
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.key_binding import KeyBindings
-import time
 
 finish_words = ["goodbye", "close", "exit"]
 COMMAND_WORDS = ["add", "change", "show_phone", "show_email", "show_address", "show_birthday", "show_all", "help",
